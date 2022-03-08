@@ -77,15 +77,15 @@ AUTH_USER_MODEL = 'users.User'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+# mysql://b2e79ff57252da:da53c176@us-cdbr-east-05.cleardb.net/heroku_de0ea894f428f0c?reconnect=true
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cod_project',
-        'USER': 'root',
-        'PASSWORD': 'spartan',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': 'heroku_de0ea894f428f0c',
+        'USER': 'b2e79ff57252da',
+        'PASSWORD': 'da53c176',
+        'HOST': 'us-cdbr-east-05.cleardb.net',
     }
 }
 

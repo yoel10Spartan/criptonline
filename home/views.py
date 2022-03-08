@@ -23,7 +23,7 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
         user = request.user
         user_extra_fields = UserExtraFields.objects.filter(user=user)
         code = str(user_extra_fields.first().code)
-        link_code = 'http://{}/?code={}'.format(get_current_site(request).domain, code)
+        link_code = 'https://{}/?code={}'.format(get_current_site(request).domain, code)
         return Response(
             {'link_code': link_code, 'invitation_code': code}, status=status.HTTP_200_OK
         )
@@ -42,15 +42,22 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
             (not user_extra_fields_self.first().invitation_code)
         ):
             user_extra_fields_self.update(invitation_code=code)
-            content = {
-                'user_inviting': str(inviting_user.first().user),
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(
             { "detail": "You can't invite yourself" }, 
             status=status.HTTP_409_CONFLICT,
         )
+
+    @action(detail=False, methods=['get'])
+    def get_all_code_request(self, request):
+        user_extra_fields = UserExtraFields.objects 
+        inviting_user = user_extra_fields.filter(user=request.user)
+        user_inviting = user_extra_fields.filter(code=inviting_user.first().code.code)
+        content = {
+            'user_inviting': user_inviting,
+        }
+        return Response(content, status=status.HTTP_200_OK)
 
 class ValidateInvitationCode(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
