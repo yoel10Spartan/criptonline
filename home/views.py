@@ -1,3 +1,4 @@
+import random
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
@@ -7,10 +8,58 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import status, viewsets
+from twilio.rest import Client
+from . import keys
 
-from .models import VIP, DataToAccept, InvitationCode
+from .models import VIP, CodeVerification, DataToAccept, InvitationCode
 from .serializers import InvitationCodeSerializer, VIPListSerializer
 from .models import UserExtraFields
+
+def get_random_num():
+    return random.randint(10, 99)
+
+@api_view(['POST'])
+def verification_code(request):
+    id_user = request.data['id_user']
+    code = request.data['code_verification']
+   
+    code_verification = CodeVerification.objects.filter(
+        id_user=id_user, code_verification=code
+    ).exists()
+
+    if code_verification:
+        return Response(status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+def get_code_verification(request):
+    code_verification = '{}{}{}{}'.format(
+        get_random_num(),
+        get_random_num(),
+        get_random_num(),
+        get_random_num()
+    )
+
+    id_user = '{}{}'.format(
+        get_random_num(),
+        get_random_num(),
+    )
+
+    client = Client(keys.account_sid, keys.auth_token)
+    client.messages.create(
+        body='Codigo de Criptoline {}'.format(code_verification),
+        from_=keys.twilio_number,
+        to=request.data['number_phone']
+    )
+    
+    CodeVerification.objects.create(
+        id_user=id_user, 
+        code_verification=code_verification
+    )
+
+    return Response(
+        {'id_user': id_user}, status=status.HTTP_200_OK
+    )
 
 class InvitationCodeRequest(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

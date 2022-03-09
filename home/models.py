@@ -34,3 +34,7 @@ class DataToAccept(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     is_active = models.BooleanField(default=True)
+
+class CodeVerification(models.Model):
+    id_user = models.CharField(max_length=255)
+    code_verification = models.BigIntegerField()
