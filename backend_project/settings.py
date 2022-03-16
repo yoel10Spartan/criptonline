@@ -99,7 +99,7 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = 'build/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'media')
 
 STATIC_URL = '/static/'
