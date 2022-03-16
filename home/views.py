@@ -9,57 +9,56 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import status, viewsets
 from twilio.rest import Client
-from . import keys
+from center.models import Points
+from center.views import PointsRequest
+
+from users.models import User
 
 from .models import VIP, CodeVerification, DataToAccept, InvitationCode
-from .serializers import InvitationCodeSerializer, VIPListSerializer
+from .serializers import CodeVerificationSerializer, DataToAcceptSerializer, InvitationCodeSerializer, VIPListSerializer
 from .models import UserExtraFields
+from . import keys
 
 def get_random_num():
     return random.randint(10, 99)
 
-@api_view(['POST'])
-def verification_code(request):
-    id_user = request.data['id_user']
-    code = request.data['code_verification']
-   
-    code_verification = CodeVerification.objects.filter(
-        id_user=id_user, code_verification=code
-    ).exists()
+class VerificationCodeRequest(viewsets.ModelViewSet):
+    queryset = CodeVerification.objects.filter(is_active=True)
+    serializer_class = CodeVerificationSerializer
 
-    if code_verification:
-        return Response(status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-@api_view(['POST'])
-def get_code_verification(request):
-    code_verification = '{}{}{}{}'.format(
-        get_random_num(),
-        get_random_num(),
-        get_random_num(),
-        get_random_num()
-    )
-
-    id_user = '{}{}'.format(
-        get_random_num(),
-        get_random_num(),
-    )
-
-    client = Client(keys.account_sid, keys.auth_token)
-    client.messages.create(
-        body='Codigo de Criptoline {}'.format(code_verification),
-        from_=keys.twilio_number,
-        to=request.data['number_phone']
-    )
+    @action(detail=False, methods=['post'])
+    def check_code(self, request):
+        id_user = request.data['id_user']
+        code = request.data['code_verification']
     
-    CodeVerification.objects.create(
-        id_user=id_user, 
-        code_verification=code_verification
-    )
+        code_verification = CodeVerification.objects.filter(
+            id_user=id_user, code_verification=code
+        ).exists()
 
-    return Response(
-        {'id_user': id_user}, status=status.HTTP_200_OK
-    )
+        if code_verification:
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(detail=False, methods=['post'])
+    def send_code(self, request):
+        code_verification = '{}{}{}{}'.format(*[get_random_num() for _ in range(4)])
+        id_user = '{}{}'.format(*[get_random_num() for _ in range(2)])
+    
+        client = Client(keys.account_sid, keys.auth_token)
+        client.messages.create(
+            body='Codigo de Criptoline {}'.format(code_verification),
+            from_=keys.twilio_number,
+            to=request.data['number_phone']
+        )
+        
+        CodeVerification.objects.create(
+            id_user=id_user, 
+            code_verification=code_verification
+        )
+
+        return Response(
+            {'id_user': id_user}, status=status.HTTP_200_OK
+        )
 
 class InvitationCodeRequest(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -71,7 +70,7 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
     def get_link_code(self, request):
         user = request.user
         user_extra_fields = UserExtraFields.objects.filter(user=user)
-        code = str(user_extra_fields.first().code)
+        code = str(user_extra_fields.first().code if user_extra_fields else '')
         link_code = 'https://{}/?code={}'.format(get_current_site(request).domain, code)
         return Response(
             {'link_code': link_code, 'invitation_code': code}, status=status.HTTP_200_OK
@@ -83,6 +82,7 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
         invitation_code = InvitationCode.objects.filter(code=code).first()
         user_extra_fields = UserExtraFields.objects 
         inviting_user = user_extra_fields.filter(code=invitation_code.id)
+        
         user_extra_fields_self = user_extra_fields.filter(user=request.user)
 
         if(
@@ -90,7 +90,7 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
             and
             (not user_extra_fields_self.first().invitation_code)
         ):
-            user_extra_fields_self.update(invitation_code=code)
+            user_extra_fields_self.update(invitation_code=invitation_code)  
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(
@@ -101,33 +101,19 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def get_all_code_request(self, request):
         user_extra_fields = UserExtraFields.objects 
-        inviting_user = user_extra_fields.filter(user=request.user)
-        user_inviting = user_extra_fields.filter(code=inviting_user.first().code.code)
+        inviting_user = user_extra_fields.filter(user=request.user).first()
+        
+        if not inviting_user.invitation_code:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        id_invitation_code = inviting_user.invitation_code.id
+        print(id_invitation_code)
+        user_inviting = user_extra_fields.filter(code=id_invitation_code).first()
+    
         content = {
-            'user_inviting': user_inviting,
+            'user_inviting': user_inviting.user.name,
         }
         return Response(content, status=status.HTTP_200_OK)
-
-class ValidateInvitationCode(APIView):
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, code, format=None):
-        
-        invitation_code = InvitationCode.objects.filter(code=code).first()
-        inviting_user = UserExtraFields.objects.filter(code=invitation_code.id).first()
-
-        if inviting_user.user.id != request.user.id:
-            content = {
-                'user_inviting': str(inviting_user.user),
-                'code': str(code),
-            }
-            return Response(content, status=status.HTTP_200_OK)
-
-        return Response(
-            { "detail": "You can't invite yourself" }, 
-            status=status.HTTP_409_CONFLICT,
-        )
 
 class VIPRequest(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -153,12 +139,19 @@ class VIPRequest(viewsets.ModelViewSet):
         hold = bool(vip_data_accept)
 
         select_vip_item = vip_data_accept or vip_user_extra_fields
-        vip_select = select_vip_item.id if select_vip_item else None
+        vip_select = select_vip_item if select_vip_item else None
+        
+        vip_serializer = VIPListSerializer(vip_select)
 
         exists = bool(vip_select)
 
         return Response(
-            {'accept': accept, 'hold': hold, 'vip_select': vip_select, 'exists': exists},
+            {
+                'accept': accept, 
+                'hold': hold, 
+                'vip_select': vip_serializer.data, 
+                'exists': exists
+            },
             status=status.HTTP_200_OK
         )
         
@@ -172,7 +165,7 @@ class VIPRequest(viewsets.ModelViewSet):
                 data_to_accept.update(vip=vip)
             else:
                 DataToAccept.objects.create(user=user, vip=vip)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT) 
         return Response(
             {'detail':'invalid code'}, 
             status=status.HTTP_406_NOT_ACCEPTABLE
@@ -190,3 +183,35 @@ class VIPRequest(viewsets.ModelViewSet):
         return Response(
             {'detail': 'You have to choose a vip'}, status=status.HTTP_406_NOT_ACCEPTABLE
         )
+        
+class DataToAcceptRequest(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    queryset = DataToAccept.objects.filter(is_active=True)
+    serializer_class = DataToAcceptSerializer
+    
+    @action(detail=False, methods=['get'])
+    def get_users_by_accept(self, request):
+        serialized = self.serializer_class(self.queryset, many=True)
+        return Response(
+            {'users': serialized.data}, 
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['put'])
+    def accept_user(self, request, pk):
+        data_to_accept = self.queryset.filter(pk=pk)
+        
+        if not data_to_accept.exists():
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        
+        user = data_to_accept.first().user
+        vip = data_to_accept.first().vip
+        user_extra_fields = UserExtraFields.objects.filter(user=user)
+        
+        user_extra_fields.update(vip=vip)
+        data_to_accept.update(is_active=False)
+        
+        PointsRequest(user).update_or_create(vip)
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -10,8 +10,10 @@ from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework import status
+from center.views import PointsRequest
 
 from home.models import InvitationCode, UserExtraFields
+from task.models import Commissions
 from .serializers import UserLoginSerializer, UserModelSerializer, UserSerializer, UserSignUpSerializer
 
 
@@ -64,6 +66,8 @@ class SignupView(APIView):
         code = InvitationCode.objects.create(code=uuid.uuid1().hex)
         user_additional = UserExtraFields(user=user, code=code)
         user_additional.save()
+        Commissions.objects.create(user=user)
+        PointsRequest(user=user).create()
 
         return Response({ 'user': data }, status=status.HTTP_201_CREATED)
 
