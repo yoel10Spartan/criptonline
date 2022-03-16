@@ -99,13 +99,15 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'media', 'images')
+MEDIA_URL = '/static/images/'
+MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/static/images')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'build/static'),
+    os.path.join(BASE_DIR, 'media')
+]
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'build/static')
-]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # REST_FRAMEWORK = {
@@ -122,5 +124,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CSRF_COOKIE_SECURE = True
+
 
 SESSION_COOKIE_SECURE = True
