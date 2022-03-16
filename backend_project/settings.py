@@ -99,8 +99,8 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = '/static/images/'
-MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/static/images')
+MEDIA_URL = '/static/media/'
+MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/static/media')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'build/static'),
