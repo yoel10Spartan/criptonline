@@ -99,8 +99,8 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/media')
+MEDIA_URL = 'build/media/'
+MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'media')
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
@@ -120,3 +120,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SECURE = True
