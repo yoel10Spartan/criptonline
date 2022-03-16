@@ -3,7 +3,7 @@ from users.models import User
 from django.utils.timezone import now
 
 class Task(models.Model):
-    image = models.ImageField(upload_to='images/')
+    image = models.ImageField(upload_to='')
     title = models.CharField(max_length=100)
     points = models.BigIntegerField()
 
