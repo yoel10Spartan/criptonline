@@ -99,7 +99,7 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = '/static/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/media')
 
 STATICFILES_DIRS = [
@@ -124,6 +124,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CSRF_COOKIE_SECURE = True
-
 
 SESSION_COOKIE_SECURE = True
