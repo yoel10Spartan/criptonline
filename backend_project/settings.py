@@ -99,7 +99,7 @@ USE_L10N = True
 
 USE_TZ = False
 
-MEDIA_URL = '/media/'
+MEDIA_URL = '/static/media/'
 MEDIA_ROOT = '{}{}'.format(BASE_DIR, '/media')
 
 STATICFILES_DIRS = [
