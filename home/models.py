@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from django.utils.timezone import now
 
 class VIP(models.Model):
     vip_name = models.CharField(max_length=50, null=False)
@@ -24,6 +25,7 @@ class InvitationCode(models.Model):
 class UserExtraFields(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     vip = models.ForeignKey(VIP, on_delete=models.CASCADE, null=True, blank=True)
+    updated_vip = models.DateField(default=now)
     code = models.ForeignKey(
         InvitationCode, 
         on_delete=models.CASCADE, 

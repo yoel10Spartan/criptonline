@@ -12,10 +12,27 @@ class Task(models.Model):
     def __str__(self) -> str:
         return self.title
 
+class TaskHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tasks = models.ManyToManyField(Task, through='TaskAmount')
+    
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self) -> str:
+        return "{}'s history".format(self.user.name)
+    
+class TaskAmount(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task_history = models.ForeignKey(TaskHistory, on_delete=models.CASCADE)
+    
+    def __str__(self) -> str:
+        return str(self.task)
+
 class Commissions(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     personal_commission = models.BigIntegerField(null=True)
     completed_tasks = models.IntegerField(default=0)
+    remaining_withdrawals = models.IntegerField(default=0)
 
     def __str__(self) -> str:
         return str(self.user)

@@ -7,10 +7,11 @@ from rest_framework import status, viewsets
 from rest_framework import request
 
 from center.models import Points
-from center.views import PointsRequest
+from center.views import PointsHistoryRequest, PointsRequest
 from home.models import UserExtraFields
-from .models import AssignedTasks, Commissions, Task
+from .models import AssignedTasks, Commissions, Task, TaskAmount, TaskHistory
 from .serializers import TaksSerializer
+from utils.date import Date
 
 class TaskRequest(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -49,14 +50,19 @@ class TaskRequest(viewsets.ModelViewSet):
         if not UserExtraFields.objects.filter(user=request.user).first().vip:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
+        date = Date(str(task_assigned.first().update_date))
+        
         if(
             (not task_assigned.exists()) 
             or
-            (TaskRequest.verify_date(str(task_assigned.first().update_date)))
+            (date.verify_date())
         ):
             list_task = self.update_or_create(request, task_assigned.exists())
             
-            PointsRequest(request.user).reset_day_benefit
+            points = PointsRequest(request.user)
+            PointsHistoryRequest(request.user).add(points.day_benefit_total)
+            points.reset_day_benefit
+            
             Commissions.objects \
                 .filter(user=request.user) \
                 .update(completed_tasks=0, personal_commission=0)
@@ -88,6 +94,28 @@ class TaskRequest(viewsets.ModelViewSet):
         )
         return
 
+    def get_or_create_history_task(self, user):
+        task_history = TaskHistory.objects.filter(user=user)
+        if not task_history.exists():
+            return TaskHistory.objects.create(user=user)
+        return task_history.first()
+
+    def add_history_task(self, request, task):
+        task_history = self.get_or_create_history_task(request.user)
+        TaskAmount.objects.create(task=task, task_history=task_history)
+        return
+    
+    def get_history_task(self, request):
+        task_history = self.get_or_create_history_task(request.user)
+        tasks = TaskAmount.objects.filter(task_history=task_history)
+        return [i.task for i in tasks]
+    
+    @action(detail=False, methods=['get'])
+    def get_task_history(self, request):
+        tasks = self.get_history_task(request)
+        tasks_serializer = TaksSerializer(tasks, many=True)
+        return Response(tasks_serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['put'])
     def mark_complete(self, request, pk: int):
         task_assigned = self.assigned_taks.filter(user=request.user)
@@ -102,6 +130,8 @@ class TaskRequest(viewsets.ModelViewSet):
             points_request = PointsRequest(request.user)
             points_request.upgrade_all_benefits(points=points)
             
+            self.add_history_task(request, self.queryset.get(id=pk))
+            
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=['get'])
@@ -110,10 +140,12 @@ class TaskRequest(viewsets.ModelViewSet):
         total_assets = Points.objects.get(user=request.user).available_balance
         personal_commission = commissions.personal_commission
         completed_tasks = commissions.completed_tasks
+        remaining_withdrawals = commissions.remaining_withdrawals
+        
         return Response({
             'total_assets': total_assets, 
             'personal_commissions': personal_commission,
-            'remaining_withdrawals': 0,
+            'remaining_withdrawals': remaining_withdrawals,
             'completed_tasks': completed_tasks,
             'total_tasks': self.TOTAL_TASK
         },

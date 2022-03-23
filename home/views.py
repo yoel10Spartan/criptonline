@@ -1,4 +1,5 @@
 import random
+from datetime import date
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
@@ -11,13 +12,14 @@ from rest_framework import status, viewsets
 from twilio.rest import Client
 from center.models import Points
 from center.views import PointsRequest
-
+from task.models import Commissions
 from users.models import User
 
 from .models import VIP, CodeVerification, DataToAccept, InvitationCode
 from .serializers import CodeVerificationSerializer, DataToAcceptSerializer, InvitationCodeSerializer, VIPListSerializer
 from .models import UserExtraFields
 from . import keys
+from utils.date import Date
 
 def get_random_num():
     return random.randint(10, 99)
@@ -61,8 +63,6 @@ class VerificationCodeRequest(viewsets.ModelViewSet):
         )
 
 class InvitationCodeRequest(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
     queryset = InvitationCode.objects.filter(is_active=True)
     serializer_class = InvitationCodeSerializer
 
@@ -116,11 +116,26 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
         return Response(content, status=status.HTTP_200_OK)
 
 class VIPRequest(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
     queryset = VIP.objects.filter(is_active=True)
     serializer_class = VIPListSerializer
 
+    def update_days_vip(self, request):
+        user_extra_fields = UserExtraFields.objects.filter(user=request.user)
+        user = user_extra_fields.first()
+        
+        if not user.vip: return 0
+        
+        days_vip_expiration = user.vip.expiration
+        hiring_date_vip = user.updated_vip
+        
+        date_calc = Date(str(hiring_date_vip))
+        day_passed = date_calc.days_passed()
+         
+        if day_passed >= days_vip_expiration:
+            user_extra_fields.update(vip=None, updated_vip=date.today())
+        
+        return (days_vip_expiration - day_passed)
+            
     @action(detail=False, methods=['get'])
     def get_vips(self, request):
         vip_list = VIP.objects.all()
@@ -129,7 +144,7 @@ class VIPRequest(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def get_all_vip_request(self, request):
-
+        
         user_extra_fields = UserExtraFields.objects.filter(user=request.user).first()
         vip_user_extra_fields = user_extra_fields.vip if user_extra_fields else False
         accept = bool(vip_user_extra_fields)
@@ -144,13 +159,16 @@ class VIPRequest(viewsets.ModelViewSet):
         vip_serializer = VIPListSerializer(vip_select)
 
         exists = bool(vip_select)
+        
+        remaining_days = self.update_days_vip(request)
 
         return Response(
             {
                 'accept': accept, 
                 'hold': hold, 
                 'vip_select': vip_serializer.data, 
-                'exists': exists
+                'exists': exists,
+                'remaining_days': remaining_days
             },
             status=status.HTTP_200_OK
         )
@@ -160,6 +178,7 @@ class VIPRequest(viewsets.ModelViewSet):
         vip = VIP.objects.filter(pk=pk).first()
         user = request.user
         data_to_accept = DataToAccept.objects.filter(user=user)
+        
         if vip:
             if data_to_accept.exists():
                 data_to_accept.update(vip=vip)
@@ -185,14 +204,15 @@ class VIPRequest(viewsets.ModelViewSet):
         )
         
 class DataToAcceptRequest(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
     queryset = DataToAccept.objects.filter(is_active=True)
     serializer_class = DataToAcceptSerializer
     
     @action(detail=False, methods=['get'])
     def get_users_by_accept(self, request):
-        serialized = self.serializer_class(self.queryset, many=True)
+        serialized = self.serializer_class(
+            self.queryset.filter(is_active=True), 
+            many=True
+        )
         return Response(
             {'users': serialized.data}, 
             status=status.HTTP_200_OK
@@ -209,9 +229,12 @@ class DataToAcceptRequest(viewsets.ModelViewSet):
         vip = data_to_accept.first().vip
         user_extra_fields = UserExtraFields.objects.filter(user=user)
         
-        user_extra_fields.update(vip=vip)
+        user_extra_fields.update(vip=vip, updated_vip=date.today())
         data_to_accept.update(is_active=False)
         
         PointsRequest(user).update_or_create(vip)
+        Commissions.objects.filter(user=request.user).update(
+            remaining_withdrawals=vip.withdrawals
+        )
         
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -16,7 +16,6 @@ from home.models import InvitationCode, UserExtraFields
 from task.models import Commissions
 from .serializers import UserLoginSerializer, UserModelSerializer, UserSerializer, UserSignUpSerializer
 
-
 class CheckAuthenticatedView(APIView):
     def get(self, request, format=None):
         user = self.request.user
