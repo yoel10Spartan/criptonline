@@ -30,7 +30,7 @@ class TaskAmount(models.Model):
 
 class Commissions(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    personal_commission = models.BigIntegerField(null=True)
+    personal_commission = models.BigIntegerField(null=True, default=0)
     completed_tasks = models.IntegerField(default=0)
     remaining_withdrawals = models.IntegerField(default=0)
 

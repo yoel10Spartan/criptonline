@@ -38,6 +38,7 @@ class UserExtraFields(models.Model):
         null=True,
         blank=True
     )
+    assigned_commission = models.BooleanField(default=False)
 
     def __str__(self):
         return '{} {}'.format(self.user.name, self.user.last_name)

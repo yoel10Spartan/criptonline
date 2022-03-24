@@ -66,7 +66,8 @@ class SignupView(APIView):
         user_additional = UserExtraFields(user=user, code=code)
         user_additional.save()
         Commissions.objects.create(user=user)
-        PointsRequest(user=user).create()
+        
+        PointsRequest.create(user)
 
         return Response({ 'user': data }, status=status.HTTP_201_CREATED)
 

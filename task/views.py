@@ -50,13 +50,11 @@ class TaskRequest(viewsets.ModelViewSet):
         if not UserExtraFields.objects.filter(user=request.user).first().vip:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
-        date = Date(str(task_assigned.first().update_date))
-        
-        if(
-            (not task_assigned.exists()) 
-            or
-            (date.verify_date())
-        ):
+        if not task_assigned.exists():
+            list_task = self.update_or_create(request, task_assigned.exists())
+            task_assigned.update(update_date=datetime.now())
+            
+        if Date(str(task_assigned.first().update_date)).verify_date():
             list_task = self.update_or_create(request, task_assigned.exists())
             
             points = PointsRequest(request.user)
@@ -66,10 +64,10 @@ class TaskRequest(viewsets.ModelViewSet):
             Commissions.objects \
                 .filter(user=request.user) \
                 .update(completed_tasks=0, personal_commission=0)
-                
+            
             task_assigned.update(update_date=datetime.now())
-        else:
-            list_task = task_assigned.first().tasks
+
+        list_task = task_assigned.first().tasks
 
         task = TaksSerializer(list_task, many=True)
         return Response(task.data, status=status.HTTP_200_OK)

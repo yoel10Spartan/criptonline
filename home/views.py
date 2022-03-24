@@ -48,7 +48,7 @@ class VerificationCodeRequest(viewsets.ModelViewSet):
     
         client = Client(keys.account_sid, keys.auth_token)
         client.messages.create(
-            body='Codigo de Criptoline {}'.format(code_verification),
+            body='[Criptonline] código de verificación {}. No compartas este código con nadie - nadie de Criptonline te pedirá este codigo'.format(code_verification),
             from_=keys.twilio_number,
             to=request.data['number_phone']
         )
@@ -80,6 +80,10 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
     def validate_code(self, request):
         code = request.data['code']
         invitation_code = InvitationCode.objects.filter(code=code).first()
+
+        if not invitation_code:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
         user_extra_fields = UserExtraFields.objects 
         inviting_user = user_extra_fields.filter(code=invitation_code.id)
         
@@ -90,7 +94,26 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
             and
             (not user_extra_fields_self.first().invitation_code)
         ):
-            user_extra_fields_self.update(invitation_code=invitation_code)  
+            user_extra_fields_self.update(invitation_code=invitation_code)
+            
+            user_extra = user_extra_fields_self.first()
+            code = user_extra.invitation_code
+            
+            invitation_code = InvitationCode.objects.filter(code=code).first()
+            user_invited_ = UserExtraFields.objects.filter(code=invitation_code)
+            user_invited = user_invited_.first()
+            
+            if user_invited.vip:
+                vip_points_default = user_invited.vip.points_default
+    
+                vip_porcentage = (8/100)*vip_points_default
+                
+                points = Points.objects.filter(user=user_invited.user)
+                frozen_quantity = points.first().frozen_quantity
+                points.update(frozen_quantity=(frozen_quantity + vip_porcentage))
+                
+                user_extra_fields_self.update(assigned_commission=True)
+              
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(
@@ -214,7 +237,7 @@ class DataToAcceptRequest(viewsets.ModelViewSet):
             many=True
         )
         return Response(
-            {'users': serialized.data}, 
+            serialized.data, 
             status=status.HTTP_200_OK
         )
 
@@ -233,8 +256,25 @@ class DataToAcceptRequest(viewsets.ModelViewSet):
         data_to_accept.update(is_active=False)
         
         PointsRequest(user).update_or_create(vip)
+        
         Commissions.objects.filter(user=request.user).update(
             remaining_withdrawals=vip.withdrawals
         )
+        
+        # user_extra = user_extra_fields.first()
+        # code = user_extra.invitation_code
+        
+        # invitation_code = InvitationCode.objects.filter(code=code).first()
+        # user_invited_ = UserExtraFields.objects.filter(code=invitation_code)
+        # user_invited = user_invited_.first()
+        
+        # if user_invited.vip:
+        #     vip_points_default = user_invited.vip.points_default
+
+        #     vip_porcentage = (8/100)*vip_points_default
+            
+        #     points = Points.objects.filter(user=user_invited.user)
+        #     frozen_quantity = points.first().frozen_quantity
+        #     points.update(frozen_quantity=(frozen_quantity + vip_porcentage))
         
         return Response(status=status.HTTP_204_NO_CONTENT)

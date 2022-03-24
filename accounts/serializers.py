@@ -25,6 +25,7 @@ class UserModelSerializer(serializers.ModelSerializer):
             'name',
             'last_name',
             'id',
+            'is_superuser',
         )
 
 class UserLoginSerializer(serializers.Serializer):

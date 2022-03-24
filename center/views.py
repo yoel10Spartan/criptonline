@@ -20,8 +20,9 @@ class PointsRequest():
         self.available_balance_user = self.filter_for_user.first().available_balance
         self.day_benefit_total = self.filter_for_user.first().day_benefit
         
-    def create(self):
-        Points.objects.create(user=self.user)
+    @staticmethod    
+    def create(user):
+        Points.objects.create(user=user)
         
     def update_or_create(self, vip_reference):
         if self.filter_for_user.exists():
