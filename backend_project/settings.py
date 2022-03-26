@@ -57,22 +57,24 @@ WSGI_APPLICATION = 'backend_project.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'heroku_de0ea894f428f0c',
-#         'USER': 'b2e79ff57252da',
-#         'PASSWORD': 'da53c176',
-#         'HOST': 'us-cdbr-east-05.cleardb.net',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'heroku_65c8f928b2fb22d',
+        'USER': 'b009cf602eb2bf',
+        'PASSWORD': '6e3eaaad',
+        'HOST': 'us-cdbr-east-05.cleardb.net',
     }
 }
+
+# mysql://b009cf602eb2bf:6e3eaaad@us-cdbr-east-05.cleardb.net/heroku_65c8f928b2fb22d
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
