@@ -9,6 +9,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['159.223.216.12']
 
+# ALLOWED_HOSTS = ['159.223.216.12']
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
