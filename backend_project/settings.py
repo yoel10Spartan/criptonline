@@ -5,9 +5,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-zr@0xs0hjmo6i%t!g=b_+i@cud%rhkbi&zby+2rm9$&wtfxpyw'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['159.223.216.12']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,13 +57,24 @@ WSGI_APPLICATION = 'backend_project.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'heroku_65c8f928b2fb22d',
+#         'USER': 'b009cf602eb2bf',
+#         'PASSWORD': '6e3eaaad',
+#         'HOST': 'us-cdbr-east-05.cleardb.net',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'heroku_65c8f928b2fb22d',
-        'USER': 'b009cf602eb2bf',
-        'PASSWORD': '6e3eaaad',
-        'HOST': 'us-cdbr-east-05.cleardb.net',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'criptonline',
+        'USER': 'cripto',
+        'PASSWORD': 'CriptOnlin.123A',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
