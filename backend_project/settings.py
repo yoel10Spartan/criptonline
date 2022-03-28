@@ -9,8 +9,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['159.223.216.12']
 
-# ALLOWED_HOSTS = ['159.223.216.12']
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -79,6 +77,7 @@ DATABASES = {
         'PORT': '',
     }
 }
+
 
 # mysql://b009cf602eb2bf:6e3eaaad@us-cdbr-east-05.cleardb.net/heroku_65c8f928b2fb22d
 
