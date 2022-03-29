@@ -71,17 +71,27 @@ AUTH_USER_MODEL = 'users.User'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'criptonline',
+#         'USER': 'cripto',
+#         'PASSWORD': 'CriptOnlin.123A',
+#         'HOST': 'localhost',
+#         'PORT': '',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'criptonline',
-        'USER': 'cripto',
+        'USER': 'root',
         'PASSWORD': 'CriptOnlin.123A',
         'HOST': 'localhost',
         'PORT': '',
     }
 }
-
 
 # mysql://b009cf602eb2bf:6e3eaaad@us-cdbr-east-05.cleardb.net/heroku_65c8f928b2fb22d
 

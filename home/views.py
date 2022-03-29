@@ -71,7 +71,7 @@ class InvitationCodeRequest(viewsets.ModelViewSet):
         user = request.user
         user_extra_fields = UserExtraFields.objects.filter(user=user)
         code = str(user_extra_fields.first().code if user_extra_fields else '')
-        link_code = 'https://{}/?code={}'.format(get_current_site(request).domain, code)
+        link_code = 'http://{}/?code={}'.format(get_current_site(request).domain, code)
         return Response(
             {'link_code': link_code, 'invitation_code': code}, status=status.HTTP_200_OK
         )
