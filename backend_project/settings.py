@@ -11,7 +11,7 @@ SECRET_KEY = 'django-insecure-zr@0xs0hjmo6i%t!g=b_+i@cud%rhkbi&zby+2rm9$&wtfxpyw
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['159.223.216.12']
+ALLOWED_HOSTS = ['159.223.216.12', 'www.criptonline.store', 'criptonline.store']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
