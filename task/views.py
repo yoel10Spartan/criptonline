@@ -71,6 +71,12 @@ class TaskRequest(viewsets.ModelViewSet):
 
         task = TaksSerializer(list_task, many=True)
         return Response(task.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def get_all_task(self, request):
+        tasks = Task.objects.all()
+        staks = TaksSerializer(tasks, many=True, context={'request': request})
+        return Response(staks.data)
 
     def change_commissions(self, request: request, points: int, task_num: int):
         commissions = Commissions.objects
