@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'home',
     'task',
     'center',
-    'drf_yasg',
+    # 'drf_yasg',
 ]
 
 MIDDLEWARE = [
