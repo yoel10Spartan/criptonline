@@ -3,14 +3,16 @@ from rest_framework import serializers
 from .models import Task, Commissions, AssignedTasks
 
 class TaksSerializer(serializers.ModelSerializer):
-    # image = serializers.SerializerMethodField('get_url')
-
-    # def get_url(self, obj):
-    #     return self.context['request'].build_absolute_uri(obj.image)
-    
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         ret['image'] = ret['image']
+        
+        if self.context.get('subtract_percentage'):
+            ret['points'] = self.context['subtract_percentage'](
+                ret['points'],
+                self.context['vip_percentage']
+            )
+        
         return ret
     
     class Meta:

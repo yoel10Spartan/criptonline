@@ -21,6 +21,9 @@ class TaskRequest(viewsets.ModelViewSet):
     assigned_taks = AssignedTasks.objects
     TOTAL_TASK = 5
     
+    def subtract_percentage(self, value, porcentage):
+        return round(value * (porcentage/100))
+    
     @staticmethod
     def verify_date(date: str):
         date_assigned = datetime.fromisoformat(date)
@@ -68,8 +71,17 @@ class TaskRequest(viewsets.ModelViewSet):
             task_assigned.update(update_date=datetime.now())
 
         list_task = task_assigned.first().tasks
+        
+        user = request.user
+        vip = UserExtraFields.objects.filter(user=user).first().vip
+        vip_percentage = vip.percentage
+        
+        context = {
+            'vip_percentage': vip_percentage,
+            'subtract_percentage': self.subtract_percentage
+        }
 
-        task = TaksSerializer(list_task, many=True)
+        task = TaksSerializer(list_task, many=True, context=context)
         return Response(task.data, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['get'])
@@ -124,7 +136,13 @@ class TaskRequest(viewsets.ModelViewSet):
     def mark_complete(self, request, pk: int):
         task_assigned = self.assigned_taks.filter(user=request.user)
         tasks = task_assigned.first().tasks
+        
+        user = request.user
+        vip = UserExtraFields.objects.filter(user=user).first().vip
+        vip_percentage = vip.percentage
         points = tasks.filter(id=pk).first().points
+        
+        points = self.subtract_percentage(points, vip_percentage)
 
         tasks.remove(pk)
         

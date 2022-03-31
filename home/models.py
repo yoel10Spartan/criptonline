@@ -8,6 +8,7 @@ class VIP(models.Model):
     price = models.IntegerField()
     withdrawals = models.IntegerField(default=0)
     points_default = models.IntegerField(default=0, null=True)
+    percentage = models.IntegerField(default=100, null=True)
 
     is_active = models.BooleanField(default=True)
 

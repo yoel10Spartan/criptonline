@@ -9,6 +9,10 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['www.criptonline.store', 'criptonline.store', '159.223.216.12',]
 
+# DEBUG = True
+
+# ALLOWED_HOSTS = []
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
